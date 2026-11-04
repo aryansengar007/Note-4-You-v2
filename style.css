@@ -1,0 +1,651 @@
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("fonts/bricolage-grotesque.woff2") format("woff2");
+  font-weight: 400 800;
+  font-stretch: 75% 100%;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --curtain: #d9291f;
+  --curtain-deep: #a81e16;
+  --butter: #ffd84d;
+  --pink: #ff9ec0;
+  --sky: #8ed1ff;
+  --mint: #b6f0cc;
+  --black: #000000;
+  --white: #ffffff;
+  --sans: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* How much of each curtain stays visible once it has been pulled aside. */
+  --gather: 0.09;
+  --side: calc(var(--gather) * 50.5vw + 14px);
+
+  /* Foreground colour flips from white (on the curtain) to black (on the butter stage). */
+  --fg: var(--white);
+  --focus: var(--white);
+}
+
+@media (min-width: 600px) {
+  :root {
+    --gather: 0.11;
+  }
+}
+
+@media (min-width: 1100px) {
+  :root {
+    --gather: 0.14;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--butter);
+  color: var(--black);
+  font: 500 1.125rem/1.5 var(--sans);
+  font-stretch: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body.is-open {
+  --fg: var(--black);
+  --focus: var(--black);
+}
+
+/* Booth hardware: the rod and the two velvet curtains. */
+
+.rod {
+  position: fixed;
+  z-index: 6;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: var(--black);
+}
+
+.curtain {
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.3) 0,
+      rgba(0, 0, 0, 0) 12px,
+      rgba(255, 255, 255, 0.1) 24px,
+      rgba(0, 0, 0, 0) 32px,
+      rgba(0, 0, 0, 0.3) 36px
+    ),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0) 28%, rgba(0, 0, 0, 0) 72%, rgba(0, 0, 0, 0.25)),
+    var(--curtain);
+  transform: scaleX(1);
+  transition: transform 0.95s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.curtain--l {
+  left: 0;
+  transform-origin: 0 50%;
+  box-shadow: inset -4px 0 0 rgba(0, 0, 0, 0.4);
+}
+
+.curtain--r {
+  right: 0;
+  transform-origin: 100% 50%;
+  box-shadow: inset 4px 0 0 rgba(0, 0, 0, 0.4);
+}
+
+body.is-gathered .curtain {
+  transform: scaleX(var(--gather));
+}
+
+/* Page frame */
+
+.page {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding:
+    10px
+    max(var(--side), env(safe-area-inset-right))
+    max(6px, env(safe-area-inset-bottom))
+    max(var(--side), env(safe-area-inset-left));
+  color: var(--fg);
+  transition: color 0.2s ease 0.5s;
+}
+
+.top,
+main {
+  width: 100%;
+  max-width: 30rem;
+  margin: 0 auto;
+}
+
+.top,
+.foot {
+  transition: opacity 0.2s ease;
+}
+
+.opening .top,
+.opening .foot {
+  opacity: 0;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding-top: 6px;
+}
+
+.exit {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-right: 8px;
+  color: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-underline-offset: 4px;
+}
+
+/* Four frames, like a photo strip. Filled frames show how far along she is. */
+
+.strip {
+  display: flex;
+  gap: 6px;
+}
+
+.strip i {
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid currentColor;
+  border-radius: 4px;
+}
+
+.strip[data-n="1"] i:nth-child(-n + 1),
+.strip[data-n="2"] i:nth-child(-n + 2),
+.strip[data-n="3"] i:nth-child(-n + 3),
+.strip[data-n="4"] i:nth-child(-n + 4) {
+  background: currentColor;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-top: clamp(12px, 3vh, 32px);
+  padding-bottom: 8px;
+}
+
+/* Type */
+
+h1 {
+  margin: 0 0 18px;
+  font-weight: 800;
+  font-stretch: 76%;
+  font-size: clamp(2.75rem, 15vw, 4.5rem);
+  line-height: 0.94;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+  outline: none;
+}
+
+p {
+  margin: 0 0 14px;
+  max-width: 34ch;
+  text-wrap: pretty;
+}
+
+.fine {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.sticker {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 8px 0 30px;
+  background: var(--white);
+  color: var(--black);
+  border: 3px solid var(--black);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 var(--black);
+  transform: rotate(-7deg);
+  font-weight: 800;
+  font-stretch: 78%;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+/* Photo frame: coloured picture area, white caption strip. */
+
+.shot {
+  --frame: var(--white);
+  color: var(--black);
+  background: var(--white);
+  border: 3px solid var(--black);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--black);
+  overflow: hidden;
+}
+
+[data-step="message"] .shot {
+  --frame: var(--pink);
+}
+
+[data-step="reply"] .shot {
+  --frame: var(--sky);
+}
+
+[data-step="contact"] .shot {
+  --frame: var(--mint);
+}
+
+.screen--stage .shot {
+  margin-top: clamp(0px, 3vh, 28px);
+}
+
+.shot__photo {
+  padding: 26px 20px 28px;
+  background: var(--frame);
+  border-bottom: 3px solid var(--black);
+}
+
+.shot h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 12.5vw, 3.5rem);
+}
+
+.shot__caption {
+  padding: 18px 20px 22px;
+}
+
+.shot__caption p:last-child {
+  margin-bottom: 0;
+}
+
+.sig {
+  margin: 14px 0 0;
+  font-weight: 800;
+  font-stretch: 76%;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.actions {
+  margin-top: auto;
+  padding-top: 32px;
+  padding-bottom: 8px;
+  display: grid;
+  gap: 16px;
+}
+
+/* Buttons: plain rectangles that press down like a real booth button. */
+
+.btn {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  padding: 0 22px;
+  border: 3px solid var(--black);
+  border-radius: 10px;
+  box-shadow: 0 5px 0 var(--black);
+  font: 800 1.0625rem/1.2 var(--sans);
+  font-stretch: 100%;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--black);
+}
+
+.btn--ink {
+  background: var(--black);
+  color: var(--white);
+}
+
+.btn--paper {
+  background: var(--white);
+  color: var(--black);
+}
+
+.btn--deep {
+  background: var(--curtain-deep);
+  color: var(--white);
+}
+
+.text-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  align-self: flex-start;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: 700 1.0625rem/1.2 var(--sans);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:focus-visible,
+.text-btn:focus-visible,
+.exit:focus-visible,
+.foot a:focus-visible,
+.back:focus-visible,
+.doc a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.shot .btn:focus-visible {
+  outline-color: var(--black);
+}
+
+/* Footer */
+
+.foot {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+.foot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  color: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-underline-offset: 4px;
+}
+
+/* Motion: the curtain opens when she says yes. Everything else answers a tap. */
+
+.opening [data-step="intro"] {
+  animation: fade-out 0.28s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.screen--stage.enter .shot {
+  animation: pop 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.screen--stage.enter .actions {
+  animation: rise 0.4s ease 0.18s both;
+}
+
+.screen--red.enter > * {
+  animation: rise 0.35s ease both;
+}
+
+.screen--red.enter > :nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+.screen--red.enter > :nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+/* The message arrives in beats so it can be read in order. */
+
+[data-step="message"].enter .shot {
+  animation: none;
+}
+
+[data-step="message"].enter .shot__photo {
+  animation: pop 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s both;
+}
+
+[data-step="message"].enter .shot__caption p {
+  animation: rise 0.4s ease 0.85s both;
+}
+
+[data-step="message"].enter .shot__caption .sig {
+  animation: rise 0.4s ease 1.2s both;
+}
+
+[data-step="message"].enter .actions {
+  animation: rise 0.4s ease 1.6s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curtain,
+  .page,
+  .top,
+  .foot,
+  .btn {
+    transition: none;
+  }
+
+  .opening [data-step="intro"],
+  .screen.enter .shot,
+  .screen.enter .shot__photo,
+  .screen.enter .shot__caption p,
+  .screen.enter .sig,
+  .screen.enter .actions,
+  .screen--red.enter > * {
+    animation: none;
+  }
+}
+
+/* Short phones: keep both buttons on screen without scrolling. */
+
+@media (max-height: 700px) {
+  .top {
+    min-height: 48px;
+    padding-top: 2px;
+  }
+
+  .sticker {
+    display: none;
+  }
+
+  h1 {
+    margin-bottom: 12px;
+    font-size: clamp(2.5rem, 13vw, 3.5rem);
+  }
+
+  .shot h1 {
+    font-size: clamp(2.25rem, 11vw, 3rem);
+  }
+
+  .shot__photo {
+    padding: 20px 18px 22px;
+  }
+
+  .shot__caption {
+    padding: 14px 18px 18px;
+  }
+
+  p {
+    margin-bottom: 10px;
+  }
+
+  .actions {
+    padding-top: 20px;
+    gap: 14px;
+  }
+
+  .btn {
+    min-height: 54px;
+  }
+}
+
+/* Laptop and desktop: same booth, centred between the gathered curtains. */
+
+@media (min-width: 900px) {
+  .top,
+  main {
+    max-width: 34rem;
+  }
+
+  h1 {
+    font-size: clamp(3.5rem, 5.5vw, 5rem);
+  }
+
+  .shot h1 {
+    font-size: clamp(3rem, 4.6vw, 3.75rem);
+  }
+
+  .screen {
+    justify-content: center;
+    padding-top: 0;
+    padding-bottom: 40px;
+  }
+
+  .screen .actions {
+    margin-top: 0;
+    padding-top: 36px;
+  }
+}
+
+/* Legal pages: white sheet on the stage, curtains already pulled aside. */
+
+.sheet {
+  padding: 26px 22px 30px;
+  color: var(--black);
+  background: var(--white);
+  border: 3px solid var(--black);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--black);
+}
+
+.sheet h1 {
+  margin-bottom: 8px;
+  font-size: clamp(2.5rem, 12vw, 3.5rem);
+}
+
+.sheet h2 {
+  margin: 30px 0 8px;
+  font-weight: 800;
+  font-stretch: 85%;
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.sheet p,
+.sheet li {
+  max-width: 62ch;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.sheet ul {
+  margin: 0 0 16px;
+  padding-left: 1.25rem;
+}
+
+.sheet li {
+  margin-bottom: 6px;
+}
+
+.sheet a {
+  color: var(--black);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.sheet .updated {
+  font-size: 0.9375rem;
+  margin-bottom: 8px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 8px;
+  color: var(--black);
+  font-weight: 800;
+  text-underline-offset: 4px;
+}
+
+.page--doc .top,
+.page--doc main {
+  max-width: 44rem;
+}
+
+.page--doc main {
+  padding-top: 8px;
+  padding-bottom: 12px;
+}
